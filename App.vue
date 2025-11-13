@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const sitename = ref('After School Lessons');
 const lessons = ref([
@@ -14,6 +14,34 @@ const lessons = ref([
     { _id: 9, subject: 'Drama', location: 'Oxford', price: 95, spaces: 5, icon: 'fas fa-theater-masks' },
     { _id: 10, subject: 'Computer Science', location: 'London', price: 110, spaces: 5, icon: 'fas fa-laptop-code' }
 ]);
+
+const sortAttribute = ref('subject');
+const sortOrder = ref('asc');
+
+const sortedLessons = computed(() => {
+    let tempLessons = [...lessons.value];
+
+    return tempLessons.sort((a, b) => {
+        let aValue = a[sortAttribute.value];
+        let bValue = b[sortAttribute.value];
+
+        if (sortAttribute.value === 'price' || sortAttribute.value === 'spaces') {
+            aValue = Number(aValue);
+            bValue = Number(bValue);
+        } else {
+            aValue = String(aValue).toLowerCase();
+            bValue = String(bValue).toLowerCase();
+        }
+
+        if (aValue < bValue) {
+            return sortOrder.value === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+            return sortOrder.value === 'asc' ? 1 : -1;
+        }
+        return 0;
+    });
+});
 </script>
 
 <template>
@@ -23,9 +51,41 @@ const lessons = ref([
         </header>
 
         <main>
+            <!-- Sort Controls -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="d-flex justify-content-end">
+                        <div class="me-2">
+                            <label for="sort-attribute" class="form-label">Sort by:</label>
+                            <select id="sort-attribute" class="form-select" v-model="sortAttribute">
+                                <option value="subject">Subject</option>
+                                <option value="location">Location</option>
+                                <option value="price">Price</option>
+                                <option value="spaces">Availability</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="sort-order" class="form-label">Order:</label>
+                            <div class="btn-group">
+                                <input type="radio" class="btn-check" name="sort-order" id="asc" value="asc"
+                                    v-model="sortOrder" autocomplete="off" checked>
+                                <label class="btn btn-outline-secondary" for="asc">
+                                    <i class="fas fa-arrow-up"></i> Asc
+                                </label>
+                                <input type="radio" class="btn-check" name="sort-order" id="desc" value="desc"
+                                    v-model="sortOrder" autocomplete="off">
+                                <label class="btn btn-outline-secondary" for="desc">
+                                    <i class="fas fa-arrow-down"></i> Desc
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Lessons Grid -->
             <div class="row">
-                <div v-for="lesson in lessons" :key="lesson._id" class="col-md-4 mb-4">
+                <div v-for="lesson in sortedLessons" :key="lesson._id" class="col-md-4 mb-4">
                     <div class="card h-100">
                         <div class="card-body">
                             <h5 class="card-title"><i :class="lesson.icon"></i> {{ lesson.subject }}</h5>
@@ -53,5 +113,10 @@ const lessons = ref([
 .card-title i {
     margin-right: 10px;
     color: #0d6efd;
+}
+
+.btn-check:checked+.btn {
+    background-color: #0d6efd;
+    color: white;
 }
 </style>
