@@ -15,8 +15,13 @@ const lessons = ref([
     { _id: 10, subject: 'Computer Science', location: 'London', price: 110, spaces: 5, icon: 'fas fa-laptop-code' }
 ]);
 
+const cart = ref([]);
 const sortAttribute = ref('subject');
 const sortOrder = ref('asc');
+
+const cartItemCount = computed(() => {
+    return cart.value.length;
+});
 
 const sortedLessons = computed(() => {
     let tempLessons = [...lessons.value];
@@ -42,12 +47,22 @@ const sortedLessons = computed(() => {
         return 0;
     });
 });
+
+function addToCart(lesson) {
+    if (lesson.spaces > 0) {
+        lesson.spaces--;
+        cart.value.push({ ...lesson });
+    }
+}
 </script>
 
 <template>
     <div id="app-container" class="container mt-5">
-        <header class="mb-4">
+        <header class="d-flex justify-content-between align-items-center mb-4">
             <h1>{{ sitename }}</h1>
+            <button class="btn btn-primary" :disabled="cart.length === 0">
+                <i class="fas fa-shopping-cart"></i> Cart ({{ cartItemCount }})
+            </button>
         </header>
 
         <main>
@@ -87,11 +102,15 @@ const sortedLessons = computed(() => {
             <div class="row">
                 <div v-for="lesson in sortedLessons" :key="lesson._id" class="col-md-4 mb-4">
                     <div class="card h-100">
-                        <div class="card-body">
+                        <div class="card-body d-flex flex-column">
                             <h5 class="card-title"><i :class="lesson.icon"></i> {{ lesson.subject }}</h5>
                             <p class="card-text"><strong>Location:</strong> {{ lesson.location }}</p>
                             <p class="card-text"><strong>Price:</strong> £{{ lesson.price }}</p>
                             <p class="card-text"><strong>Spaces:</strong> {{ lesson.spaces }}</p>
+                            <button class="btn btn-success mt-auto" @click="addToCart(lesson)"
+                                :disabled="lesson.spaces === 0">
+                                {{ lesson.spaces > 0 ? 'Add to Cart' : 'Sold Out' }}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -118,5 +137,9 @@ const sortedLessons = computed(() => {
 .btn-check:checked+.btn {
     background-color: #0d6efd;
     color: white;
+}
+
+button:disabled {
+    cursor: not-allowed;
 }
 </style>
