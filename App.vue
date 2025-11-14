@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, reactive } from 'vue';
 
 const sitename = ref('After School Lessons');
 const lessons = ref([
@@ -19,6 +19,16 @@ const cart = ref([]);
 const showLessons = ref(true);
 const sortAttribute = ref('subject');
 const sortOrder = ref('asc');
+
+const order = reactive({
+    name: '',
+    phone: ''
+});
+
+const validations = reactive({
+    isNameValid: true,
+    isPhoneValid: true
+});
 
 const cartItemCount = computed(() => {
     return cart.value.length;
@@ -49,6 +59,10 @@ const sortedLessons = computed(() => {
     });
 });
 
+const isFormValid = computed(() => {
+    return order.name && order.phone && validations.isNameValid && validations.isPhoneValid;
+});
+
 function toggleShowCart() {
     showLessons.value = !showLessons.value;
 }
@@ -70,6 +84,27 @@ function removeFromCart(itemToRemove) {
             originalLesson.spaces++;
         }
     }
+}
+
+function validateForm() {
+    const nameRegex = /^[A-Za-z\s]+$/;
+    const phoneRegex = /^[0-9]+$/;
+
+    validations.isNameValid = order.name ? nameRegex.test(order.name) : true;
+    validations.isPhoneValid = order.phone ? phoneRegex.test(order.phone) : true;
+}
+
+function submitOrder() {
+    if (!isFormValid.value) {
+        alert('Please fill in the form correctly.');
+        return;
+    }
+
+    alert('Order Submitted Successfully!');
+    cart.value = [];
+    order.name = '';
+    order.phone = '';
+    showLessons.value = true;
 }
 </script>
 
@@ -155,6 +190,28 @@ function removeFromCart(itemToRemove) {
                             </div>
                         </div>
                     </div>
+
+                    <!-- Checkout Form -->
+                    <div class="mt-4">
+                        <h3>Checkout</h3>
+                        <form @submit.prevent="submitOrder">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Name</label>
+                                <input type="text" id="name" class="form-control" v-model.trim="order.name"
+                                    @input="validateForm" required>
+                                <div v-if="!validations.isNameValid" class="text-danger">Name must contain letters only.
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input type="tel" id="phone" class="form-control" v-model.trim="order.phone"
+                                    @input="validateForm" required>
+                                <div v-if="!validations.isPhoneValid" class="text-danger">Phone must contain numbers
+                                    only.</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" :disabled="!isFormValid">Place Order</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </main>
@@ -183,5 +240,13 @@ function removeFromCart(itemToRemove) {
 
 button:disabled {
     cursor: not-allowed;
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+}
+
+.form-control.is-valid {
+    border-color: #198754;
 }
 </style>
