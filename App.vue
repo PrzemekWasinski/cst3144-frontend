@@ -9,9 +9,11 @@ const sitename = ref('After School Lessons');
 const lessons = ref([]);
 const cart = ref([]);
 const showLessons = ref(true);
+const searchQuery = ref('');
 const sortAttribute = ref('subject');
 const sortOrder = ref('asc');
 const isLoading = ref(true);
+const searchTimeout = ref(null);
 
 const order = reactive({
     name: '',
@@ -23,6 +25,7 @@ const validations = reactive({
     isPhoneValid: true
 });
 
+// --- COMPUTED PROPERTIES ---
 const cartItemCount = computed(() => {
     return cart.value.length;
 });
@@ -88,10 +91,11 @@ function validateForm() {
     validations.isPhoneValid = order.phone ? phoneRegex.test(order.phone) : true;
 }
 
-async function fetchLessons() {
+async function fetchLessons(query = '') {
     isLoading.value = true;
     try {
-        const response = await fetch(`${API_BASE_URL}/lessons`);
+        const url = query ? `${API_BASE_URL}/search?q=${query}` : `${API_BASE_URL}/lessons`;
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch lessons');
         lessons.value = await response.json();
     } catch (error) {
@@ -100,6 +104,13 @@ async function fetchLessons() {
     } finally {
         isLoading.value = false;
     }
+}
+
+function performSearch() {
+    clearTimeout(searchTimeout.value);
+    searchTimeout.value = setTimeout(() => {
+        fetchLessons(searchQuery.value);
+    }, 300);
 }
 
 async function updateLessonSpaces(lessonId, newSpaces) {
@@ -179,9 +190,16 @@ onMounted(() => {
         <main>
             <!-- Lessons Page -->
             <div v-if="showLessons">
-                <!-- Sort Controls -->
+                <!-- Search and Sort Controls -->
                 <div class="row mb-4">
-                    <div class="col-md-12">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" placeholder="Search lessons..." v-model="searchQuery"
+                                @input="performSearch">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
                         <div class="d-flex justify-content-end">
                             <div class="me-2">
                                 <label for="sort-attribute" class="form-label">Sort by:</label>
