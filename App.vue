@@ -1,24 +1,17 @@
 <script setup>
-import { ref, computed, reactive } from 'vue';
+import { ref, computed, reactive, onMounted } from 'vue';
 
+// --- CONFIG ---
+const API_BASE_URL = 'http://localhost:3000';
+
+// --- STATE (REFS) ---
 const sitename = ref('After School Lessons');
-const lessons = ref([
-    { _id: 1, subject: 'Math', location: 'London', price: 100, spaces: 5, icon: 'fas fa-calculator' },
-    { _id: 2, subject: 'English', location: 'Oxford', price: 80, spaces: 5, icon: 'fas fa-book' },
-    { _id: 3, subject: 'Science', location: 'London', price: 90, spaces: 5, icon: 'fas fa-flask' },
-    { _id: 4, subject: 'Music', location: 'Bristol', price: 70, spaces: 5, icon: 'fas fa-music' },
-    { _id: 5, subject: 'Art', location: 'London', price: 85, spaces: 5, icon: 'fas fa-palette' },
-    { _id: 6, subject: 'History', location: 'Cambridge', price: 75, spaces: 5, icon: 'fas fa-landmark' },
-    { _id: 7, subject: 'Geography', location: 'Manchester', price: 65, spaces: 5, icon: 'fas fa-globe' },
-    { _id: 8, subject: 'PE', location: 'London', price: 60, spaces: 5, icon: 'fas fa-running' },
-    { _id: 9, subject: 'Drama', location: 'Oxford', price: 95, spaces: 5, icon: 'fas fa-theater-masks' },
-    { _id: 10, subject: 'Computer Science', location: 'London', price: 110, spaces: 5, icon: 'fas fa-laptop-code' }
-]);
-
+const lessons = ref([]);
 const cart = ref([]);
 const showLessons = ref(true);
 const sortAttribute = ref('subject');
 const sortOrder = ref('asc');
+const isLoading = ref(true);
 
 const order = reactive({
     name: '',
@@ -63,6 +56,7 @@ const isFormValid = computed(() => {
     return order.name && order.phone && validations.isNameValid && validations.isPhoneValid;
 });
 
+// --- METHODS ---
 function toggleShowCart() {
     showLessons.value = !showLessons.value;
 }
@@ -94,18 +88,83 @@ function validateForm() {
     validations.isPhoneValid = order.phone ? phoneRegex.test(order.phone) : true;
 }
 
-function submitOrder() {
+async function fetchLessons() {
+    isLoading.value = true;
+    try {
+        const response = await fetch(`${API_BASE_URL}/lessons`);
+        if (!response.ok) throw new Error('Failed to fetch lessons');
+        lessons.value = await response.json();
+    } catch (error) {
+        console.error('Fetch lessons error:', error);
+        alert('Could not load lessons. Please check the backend connection.');
+    } finally {
+        isLoading.value = false;
+    }
+}
+
+async function updateLessonSpaces(lessonId, newSpaces) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/lessons/${lessonId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ spaces: newSpaces })
+        });
+        if (!response.ok) throw new Error(`Failed to update spaces for lesson ${lessonId}`);
+        return await response.json();
+    } catch (error) {
+        console.error('Update spaces error:', error);
+    }
+}
+
+async function submitOrder() {
     if (!isFormValid.value) {
         alert('Please fill in the form correctly.');
         return;
     }
 
-    alert('Order Submitted Successfully!');
-    cart.value = [];
-    order.name = '';
-    order.phone = '';
-    showLessons.value = true;
+    const lessonIDs = cart.value.map(item => item._id);
+    const spaces = cart.value.map(item => 1);
+
+    const orderData = {
+        name: order.name,
+        phone: order.phone,
+        lessonIDs: lessonIDs,
+        spaces: spaces
+    };
+
+    try {
+        // 1. Create the order
+        const orderResponse = await fetch(`${API_BASE_URL}/orders`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderData)
+        });
+
+        if (!orderResponse.ok) throw new Error('Failed to create order');
+
+        // 2. Update lesson spaces
+        const updatePromises = cart.value.map(item => {
+            return updateLessonSpaces(item._id, item.spaces);
+        });
+        await Promise.all(updatePromises);
+
+        // 3. Show success and reset
+        alert('Order Submitted Successfully!');
+        cart.value = [];
+        order.name = '';
+        order.phone = '';
+        showLessons.value = true;
+
+    } catch (error) {
+        console.error('Order submission error:', error);
+        alert('There was an error submitting your order. Please try again.');
+    }
 }
+
+// --- LIFECYCLE HOOK ---
+onMounted(() => {
+    fetchLessons();
+});
 </script>
 
 <template>
@@ -153,7 +212,13 @@ function submitOrder() {
                 </div>
 
                 <!-- Lessons Grid -->
-                <div class="row">
+                <div v-if="isLoading" class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p>Loading lessons...</p>
+                </div>
+                <div v-else class="row">
                     <div v-for="lesson in sortedLessons" :key="lesson._id" class="col-md-4 mb-4">
                         <div class="card h-100">
                             <div class="card-body d-flex flex-column">
