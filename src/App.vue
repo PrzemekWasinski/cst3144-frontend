@@ -206,19 +206,19 @@ onMounted(() => {
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="d-flex justify-content-end">
-                            <div class="me-2">
-                                <label for="sort-attribute" class="form-label">Sort by:</label>
-                                <select id="sort-attribute" class="form-select" v-model="sortAttribute">
+                        <div class="d-flex justify-content-end align-items-center gap-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="sort-attribute" class="form-label mb-0">Sort by:</label>
+                                <select id="sort-attribute" class="form-select form-select-sm" v-model="sortAttribute" style="width: auto;">
                                     <option value="subject">Subject</option>
                                     <option value="location">Location</option>
                                     <option value="price">Price</option>
                                     <option value="spaces">Availability</option>
                                 </select>
                             </div>
-                            <div>
-                                <label for="sort-order" class="form-label">Order:</label>
-                                <div class="btn-group">
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="form-label mb-0">Order:</label>
+                                <div class="btn-group btn-group-sm">
                                     <input type="radio" class="btn-check" name="sort-order" id="asc" value="asc"
                                         v-model="sortOrder" autocomplete="off" checked>
                                     <label class="btn btn-outline-secondary" for="asc">
@@ -306,36 +306,3 @@ onMounted(() => {
         </main>
     </div>
 </template>
-
-<style>
-.card {
-    transition: transform 0.2s;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.card-title i {
-    margin-right: 10px;
-    color: #0d6efd;
-}
-
-.btn-check:checked+.btn {
-    background-color: #0d6efd;
-    color: white;
-}
-
-button:disabled {
-    cursor: not-allowed;
-}
-
-.form-control.is-invalid {
-    border-color: #dc3545;
-}
-
-.form-control.is-valid {
-    border-color: #198754;
-}
-</style>
