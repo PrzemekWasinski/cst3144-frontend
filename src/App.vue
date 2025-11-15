@@ -2,7 +2,7 @@
 import { ref, computed, reactive, onMounted } from 'vue';
 
 // --- CONFIG ---
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = 'https://cst3144-backend-siah.onrender.com';
 
 // --- STATE (REFS) ---
 const sitename = ref('After School Lessons');
@@ -60,6 +60,12 @@ const isFormValid = computed(() => {
 });
 
 // --- METHODS ---
+function goHome() {
+    showLessons.value = true;
+    searchQuery.value = '';
+    fetchLessons();
+}
+
 function toggleShowCart() {
     showLessons.value = !showLessons.value;
 }
@@ -181,7 +187,7 @@ onMounted(() => {
 <template>
     <div id="app-container" class="container mt-5">
         <header class="d-flex justify-content-between align-items-center mb-4">
-            <h1>{{ sitename }}</h1>
+            <h1 @click="goHome" style="cursor: pointer;">{{ sitename }}</h1>
             <button class="btn btn-primary" @click="toggleShowCart" :disabled="cart.length === 0">
                 <i class="fas fa-shopping-cart"></i> Cart ({{ cartItemCount }})
             </button>
